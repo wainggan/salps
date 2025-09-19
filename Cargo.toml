@@ -1,0 +1,12 @@
+[package]
+name = "salps"
+version = "0.1.0"
+edition = "2021"
+
+description = "random string generator"
+
+author = "parchment"
+license = "MIT"
+readme = "readme.md"
+repository = "https://github.com/wainggan/salps"
+
