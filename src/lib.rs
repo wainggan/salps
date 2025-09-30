@@ -1,6 +1,6 @@
 
 pub trait Rand {
-	fn next(&self) -> f64;
+	fn next(&mut self) -> f64;
 }
 
 const FULL: &[&str] = &[
