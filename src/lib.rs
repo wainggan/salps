@@ -110,7 +110,7 @@ enum Kind {
 fn word_raw(rng: &mut impl Rand, config: &Config) -> String {
 	let mut out = String::new();
 
-	let len = util_range(rng, config.paragraph_len, 2, 12);
+	let len = util_range(rng, config.word_len, 2, 12);
 
 	let mut state = Kind::None;
 
@@ -204,5 +204,25 @@ fn paragraph_raw(rng: &mut impl Rand, config: &Config) -> String {
 /// generates a sentences to form a "paragraph".
 pub fn paragraph(rng: &mut impl Rand, config: &Config) -> String {
 	paragraph_raw(rng, config)
+}
+
+
+#[cfg(test)]
+mod test {
+	struct Fake;
+	impl crate::Rand for Fake {
+		fn next(&mut self) -> f64 {
+			0.0
+		}
+	}
+	
+	#[test]
+	fn test() {
+		let word = crate::word(&mut Fake, &crate::Config {
+			word_len: Some((4, None)),
+			..Default::default()
+		});
+		assert_eq!(word.len(), 4);
+	}
 }
 
