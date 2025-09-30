@@ -3,7 +3,37 @@ pub trait Rand {
 	fn next(&mut self) -> f64;
 }
 
-const FULL: &[&str] = &[
+fn util_range(rng: &mut impl Rand, range: Option<(u32, Option<u32>)>, default_min: u32, default_max: u32) -> u32 {
+	match range.unwrap_or((default_min, Some(default_max))) {
+		(x, None) => x,
+		(x, Some(y)) => {
+			let y = y.max(x);
+
+			let x = x as f64;
+			let y = y as f64;
+
+			(rng.next() * (y - x) + x) as u32
+		}
+	}
+}
+
+pub struct Config {
+	pub paragraph_len: Option<(u32, Option<u32>)>,
+	pub sentence_len: Option<(u32, Option<u32>)>,
+	pub word_len: Option<(u32, Option<u32>)>,
+}
+impl Default for Config {
+	fn default() -> Self {
+		Self {
+			paragraph_len: None,
+			sentence_len: None,
+			word_len: None,
+		}
+	}
+}
+
+
+const FULL: &'static [&str] = &[
 	"a",
 	"b",
 	"c",
@@ -32,7 +62,7 @@ const FULL: &[&str] = &[
 	"z",
 ];
 
-const VOWEL: &[&str] = &[
+const VOWEL: &'static [&str] = &[
 	"a",
 	"e",
 	"i",
@@ -40,7 +70,7 @@ const VOWEL: &[&str] = &[
 	"u",
 ];
 
-const FILL: &[&str] = &[
+const FILL: &'static [&str] = &[
 	"b",
 	"c",
 	"d",
@@ -64,7 +94,7 @@ const FILL: &[&str] = &[
 	"z",
 ];
 
-const LAC: &[&str] = &[
+const LAC: &'static [&str] = &[
 	"s",
 	"l",
 	"w",
@@ -77,8 +107,10 @@ enum Kind {
 	Lac,
 }
 
-fn word_raw(len: u32, rng: &mut impl Rand) -> String {
+fn word_raw(rng: &mut impl Rand, config: &Config) -> String {
 	let mut out = String::new();
+
+	let len = util_range(rng, config.paragraph_len, 2, 12);
 
 	let mut state = Kind::None;
 
@@ -116,21 +148,19 @@ fn word_raw(len: u32, rng: &mut impl Rand) -> String {
 	out
 }
 
-/// generates a word of a specified length.
-pub fn word_len(rng: &mut impl Rand, len: u32) -> String {
-	word_raw(len, rng)
-}
-/// generates a word of a random length.
-pub fn word(rng: &mut impl Rand) -> String {
-	word_raw((rng.next() * 10.0 + 2.0) as u32, rng)
+/// generates a word.
+pub fn word(rng: &mut impl Rand, config: &Config) -> String {
+	word_raw(rng, config)
 }
 
 
-fn sentence_raw(len: u32, rng: &mut impl Rand) -> String {
+fn sentence_raw(rng: &mut impl Rand, config: &Config) -> String {
 	let mut out = String::new();
 
+	let len = util_range(rng, config.sentence_len, 2, 14);
+
 	for i in 0..len {
-		out += word_raw((rng.next() * 10.0 + 2.0) as u32, rng).as_str();
+		out += word_raw(rng, config).as_str();
 		if i == len - 1 {
 			match rng.next() {
 				0.00..0.05 => out += "!",
@@ -150,38 +180,29 @@ fn sentence_raw(len: u32, rng: &mut impl Rand) -> String {
 	out
 }
 
-/// generates `len` words to form a "sentence".
+/// generates words to form a "sentence".
 /// the sentence will end with some form of punctuation,
 /// and may contain commas.
-pub fn sentence_len(rng: &mut impl Rand, len: u32) -> String {
-	sentence_raw(len, rng)
-}
-/// generates a random amount of words to form a "sentence".
-/// the sentence will end with some form of punctuation,
-/// and may contain commas.
-pub fn sentence(rng: &mut impl Rand) -> String {
-	sentence_raw((rng.next() * 12.0 + 2.0) as u32, rng)
+pub fn sentence(rng: &mut impl Rand, config: &Config) -> String {
+	sentence_raw(rng, config)
 }
 
 
-fn paragraph_raw(len: u32, rng: &mut impl Rand) -> String {
+fn paragraph_raw(rng: &mut impl Rand, config: &Config) -> String {
 	let mut out = String::new();
 
+	let len = util_range(rng, config.paragraph_len, 6, 12);
+
 	for _ in 0..len {
-		out += sentence_raw((rng.next() * 12.0 + 2.0) as u32, rng).as_str();
+		out += sentence_raw(rng, config).as_str();
 		out += " ";
 	}
 
 	out
 }
 
-/// generates `len` sentences to form a "paragraph".
-pub fn paragraph_len(rng: &mut impl Rand, len: u32) -> String {
-	paragraph_raw(len, rng)
+/// generates a sentences to form a "paragraph".
+pub fn paragraph(rng: &mut impl Rand, config: &Config) -> String {
+	paragraph_raw(rng, config)
 }
-/// generates a random amount of sentences to form a "paragraph".
-pub fn paragraph(rng: &mut impl Rand) -> String {
-	paragraph_raw((rng.next() * 12.0 + 4.0) as u32, rng)
-}
-
 
